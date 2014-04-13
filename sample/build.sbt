@@ -1,0 +1,3 @@
+import sbtcloudformation.Plugin._
+
+defaultCloudFormationSettings
