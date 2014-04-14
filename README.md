@@ -6,7 +6,7 @@ SBT plugin for working with AWS CloudFormation
 Tasks
 =====
 
- * validate - validates CloudFormation *.template files
+ * validate - validates CloudFormation *.template files. Supports `~ validate` command as well.
 
 
 Configurations
@@ -30,7 +30,7 @@ Plugin settings:
  
 In your build.sbt add:
 
-	import sbtcloudformation.Plugin._
+	import sbtcloudformation.CloudFormationPlugin._
 	
 	defaultCloudFormationSettings
 
