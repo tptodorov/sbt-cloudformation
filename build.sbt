@@ -1,3 +1,5 @@
+import bintray.Keys._
+
 sbtPlugin := true
 
 name := "sbt-cloudformation"
@@ -17,7 +19,7 @@ publishTo <<= (version) { version: String =>
    Some(Resolver.url(name, new URL(url))(Resolver.ivyStylePatterns))
 }
 
-publishMavenStyle := false
+licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
 scalacOptions += "-deprecation"
 
@@ -32,3 +34,13 @@ scriptedLaunchOpts <<= (scriptedLaunchOpts, version) { case (s,v) => s ++
 }
 
 scriptedBufferLog := false
+
+bintraySettings
+
+packageLabels in bintray := Seq("aws", "cloudformation")
+
+publishMavenStyle := false
+
+repository in bintray := "sbt-plugins"
+
+bintrayOrganization in bintray := None
