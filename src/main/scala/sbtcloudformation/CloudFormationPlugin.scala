@@ -30,12 +30,12 @@ object CloudFormationPlugin extends sbt.Plugin {
     val startParameters = settingKey[Map[String, String]]("parameters for starting CloudFormation")
 
     // stack operations
-    val stackTemplate = settingKey[File]("default template to use for this configuration")
+    val stackTemplate = settingKey[String]("default template to use for this configuration")
     val stackParams = settingKey[Map[String, String]]("Parameters applied to the template for this configuration")
     val stackCapabilities = settingKey[Seq[String]]("The list of capabilities that you want to allow in the stack . E.g.[CAPABILITY_IAM]")
     val stackRegion = settingKey[String]("The region where the stacks are deployed. E.g. eu-west-1 ")
-  val client = settingKey[AmazonCloudFormationClient]("AWS CF client")
-    
+    val client = settingKey[AmazonCloudFormationClient]("AWS CF client")
+
     val stackName = settingKey[String]("stack name")
     val describe = taskKey[Unit]("describe stack completely")
     val describeStatus = taskKey[Unit]("describe stack status")
@@ -50,7 +50,9 @@ object CloudFormationPlugin extends sbt.Plugin {
   private lazy val awsCredentialsProvider = new DefaultAWSCredentialsProviderChain()
 
   private val commonSettings = Seq(
-    templatesSourceFolder <<= baseDirectory { base => base / "src/main/aws" },
+    templatesSourceFolder <<= baseDirectory {
+      base => base / "src/main/aws"
+    },
     templates := {
       val templates = templatesSourceFolder.value ** GlobFilter("*.template")
       templates.get
@@ -98,16 +100,13 @@ object CloudFormationPlugin extends sbt.Plugin {
 
   val operationSettings = commonSettings ++ Seq(
     stackRegion := "eu-west-1",
-    stackTemplate <<= (templates) {
+    stackTemplate <<= templates {
       files =>
-        files.head
+        IO.read(files.head)
     },
-    stackName <<= (normalizedName) {
-      normName =>
-        s"${normName}"
-    },
+    stackName <<= normalizedName,
     stackCapabilities := Seq()
-    ) ++makeOperationConfig(Staging) ++ makeOperationConfig(Production)
+  ) ++ makeOperationConfig(Staging) ++ makeOperationConfig(Production)
 
   val defaultCloudFormationSettings = validationSettings ++ operationSettings
 
@@ -115,10 +114,10 @@ object CloudFormationPlugin extends sbt.Plugin {
   def makeOperationConfig(config: Configuration) = Seq(
 
     stackTemplate in config <<= stackTemplate,
-    stackParams in config := Map() ,
-    stackName in config <<= (stackName) {
+    stackParams in config := Map(),
+    stackName in config <<= stackName {
       normName =>
-        s"${config.name}-${normName}"
+        s"${config.name}-$normName"
     },
     stackRegion in config <<= stackRegion,
     stackCapabilities in config <<= stackCapabilities,
@@ -127,7 +126,7 @@ object CloudFormationPlugin extends sbt.Plugin {
         val client = new AmazonCloudFormationClient(credentials)
         client.setRegion(Region.getRegion(Regions.fromName(region)))
         client
-      },
+    },
     describe in config <<= (client in config, stackName in config, streams) map {
       (cl, stack, s) =>
 
@@ -149,7 +148,7 @@ object CloudFormationPlugin extends sbt.Plugin {
 
         val request = new CreateStackRequest
         request.setStackName(stack)
-        request.setTemplateBody(IO.read(template))
+        request.setTemplateBody(template)
         request.setCapabilities(capabilities)
 
         val reqParams = for {
@@ -174,7 +173,7 @@ object CloudFormationPlugin extends sbt.Plugin {
         val request = new DeleteStackRequest
         request.setStackName(stack)
 
-        val result = cl.deleteStack(request)
+        cl.deleteStack(request)
 
         s.log.info(s"deleting stack ${request.getStackName} ")
 
