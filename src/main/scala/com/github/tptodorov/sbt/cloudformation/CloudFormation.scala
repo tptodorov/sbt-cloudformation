@@ -43,8 +43,10 @@ object Import {
 
     // stack operations
     val stackValidate = taskKey[Seq[File]]("validate templates")
+    val stackStatus = taskKey[Option[String]]("describe stack status")
+    val stackWait = taskKey[Option[String]]("evaluates the stack until it becomes COMPLETED or FAILED, returns last status")
+
     val stackDescribe = taskKey[Unit]("describe stack completely")
-    val stackStatus = taskKey[String]("describe stack status")
     val stackCreate = taskKey[String]("create a stack and returns its stackId")
     val stackDelete = taskKey[Unit]("delete a stack")
     val stackUpdate = taskKey[String]("update a stack")
@@ -145,6 +147,15 @@ object CloudFormation extends sbt.Plugin {
     ps.toList
   }
 
+  private def fetchStatus(stack: String, cl: AmazonCloudFormationClient): Option[String] = {
+    Try {
+      val request: DescribeStacksRequest = new DescribeStacksRequest()
+      request.setStackName(stack)
+      val response = cl.describeStacks(request)
+      response.getStacks.toList.headOption.map(stack => stack.getStackStatus)
+    }.toOption.flatten
+  }
+
   def makeOperationConfig(config: Configuration) = Seq(
     awsCredentials in config <<= awsCredentials,
     stackTemplate in config <<= stackTemplate,
@@ -175,11 +186,21 @@ object CloudFormation extends sbt.Plugin {
     },
     stackStatus in config <<= (stackClient in config, stackName in config, streams) map {
       (cl, stack, s) =>
+        fetchStatus(stack, cl)
+    },
+    stackWait in config <<= (stackClient in config, stackName in config, streams) map {
+      (cl, stack, s) =>
 
-        val request: DescribeStacksRequest = new DescribeStacksRequest()
-        request.setStackName(stack)
-        val response = cl.describeStacks(request)
-        response.getStacks.toList.headOption.map(stack => stack.getStackStatus).orNull
+        def statuses: Stream[String] = Stream.cons(fetchStatus(stack, cl).orNull, statuses)
+
+        val progressStatuses: Stream[String] = statuses.takeWhile(s => s != null && s.endsWith("_PROGRESS"))
+
+        progressStatuses foreach {
+          s =>
+            Thread.sleep(10000)
+        }
+
+        statuses.headOption
     },
     stackCreate in config <<= (stackClient in config, stackName in config, stackTemplate in config, stackParams in config, stackTags in config, stackCapabilities in config, streams) map {
       (cl, stack, template, params, tags, capabilities, s) =>
