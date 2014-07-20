@@ -6,7 +6,7 @@ name := "sbt-cloudformation"
 
 organization := "com.github.tptodorov"
 
-version := "0.0.2"
+version := "0.0.3"
 
 libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.7.5"
 

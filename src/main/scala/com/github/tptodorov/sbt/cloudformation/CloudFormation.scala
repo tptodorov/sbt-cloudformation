@@ -1,19 +1,21 @@
-package sbtcloudformation
+package com.github.tptodorov.sbt.cloudformation
 
-import sbt._
-import sbt.Keys._
-import scala.util.Try
-import com.amazonaws.auth.{DefaultAWSCredentialsProviderChain, AWSCredentials}
+import java.io.FileNotFoundException
+import java.util
+
+import com.amazonaws.auth.{AWSCredentials, DefaultAWSCredentialsProviderChain}
+import com.amazonaws.regions._
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClient
 import com.amazonaws.services.cloudformation.model._
-import scala.collection.convert.WrapAsScala._
+import sbt.Keys._
+import sbt._
+
 import scala.collection.convert.WrapAsJava._
-import scala.util.Failure
-import sbt.Configuration
-import com.amazonaws.regions._
+import scala.collection.convert.WrapAsScala._
+import scala.collection.immutable.Iterable
+import scala.util.{Failure, Try}
 
-object CloudFormationPlugin extends sbt.Plugin {
-
+object Import {
 
   object Configurations {
     lazy val Production = config("production")
@@ -22,34 +24,44 @@ object CloudFormationPlugin extends sbt.Plugin {
 
   object Keys {
 
-    // for all configurations
-    val templatesSourceFolder = settingKey[File]("folder where CloudFormation templates are")
-    val awsCredentials = settingKey[AWSCredentials]("AWS credentials")
-    val templates = settingKey[Seq[File]]("template sources")
-    val validate = taskKey[Seq[File]]("validate templates")
-    val startParameters = settingKey[Map[String, String]]("parameters for starting CloudFormation")
+    type Parameters = Map[String, String]
 
-    // stack operations
+    // for all configurations
+    val awsCredentials = settingKey[AWSCredentials]("AWS credentials")
+    val templatesSourceFolder = settingKey[File]("folder where CloudFormation templates are")
+    val templates = settingKey[Seq[File]]("template sources")
+
+    // in each configuration
     val stackTemplate = settingKey[String]("default template to use for this configuration")
-    val stackParams = settingKey[Map[String, String]]("Parameters applied to the template for this configuration")
+    val stackParams = settingKey[Parameters]("Parameters applied to the template for this configuration")
     val stackCapabilities = settingKey[Seq[String]]("The list of capabilities that you want to allow in the stack . E.g.[CAPABILITY_IAM]")
     val stackRegion = settingKey[String]("The region where the stacks are deployed. E.g. eu-west-1 ")
-    val client = settingKey[AmazonCloudFormationClient]("AWS CF client")
-
     val stackName = settingKey[String]("stack name")
-    val describe = taskKey[Unit]("describe stack completely")
-    val describeStatus = taskKey[Unit]("describe stack status")
-    val create = taskKey[String]("create a stack and returns its stackId")
-    val delete = taskKey[Unit]("delete a stack")
+
+
+    // stack operations
+    val stackValidate = taskKey[Seq[File]]("validate templates")
+    val stackDescribe = taskKey[Unit]("describe stack completely")
+    val stackStatus = taskKey[Unit]("describe stack status")
+    val stackCreate = taskKey[String]("create a stack and returns its stackId")
+    val stackDelete = taskKey[Unit]("delete a stack")
+    val stackUpdate = taskKey[String]("update a stack")
+
+    val stackClient = settingKey[AmazonCloudFormationClient]("AWS CloudFormation Client")
   }
 
+}
 
-  import Keys._
-  import Configurations._
+object CloudFormation extends sbt.Plugin {
+
+
+  import com.github.tptodorov.sbt.cloudformation.Import.Configurations._
+  import com.github.tptodorov.sbt.cloudformation.Import.Keys._
 
   private lazy val awsCredentialsProvider = new DefaultAWSCredentialsProviderChain()
 
-  private val commonSettings = Seq(
+  lazy val validationSettings = Seq(
+
     templatesSourceFolder <<= baseDirectory {
       base => base / "src/main/aws"
     },
@@ -59,13 +71,10 @@ object CloudFormationPlugin extends sbt.Plugin {
     },
     awsCredentials := {
       awsCredentialsProvider.getCredentials
-    }
-  )
-
-  val validationSettings = commonSettings ++ Seq(
+    },
 
     watchSources <++= templates map identity,
-    validate <<= (awsCredentials, templates, streams) map {
+    stackValidate <<= (awsCredentials, templates, streams) map {
       (credentials, files, s) =>
 
 
@@ -98,21 +107,32 @@ object CloudFormationPlugin extends sbt.Plugin {
     }
   )
 
-  val operationSettings = commonSettings ++ Seq(
-    stackRegion := "eu-west-1",
+  lazy val defaultSettings = validationSettings ++ Seq(
+    stackRegion := System.getenv("AWS_DEFAULT_REGION"),
     stackTemplate <<= templates {
       files =>
+        if (files.isEmpty)
+          throw new FileNotFoundException("*.template not found in this project")
         IO.read(files.head)
     },
     stackName <<= normalizedName,
     stackCapabilities := Seq()
   ) ++ makeOperationConfig(Staging) ++ makeOperationConfig(Production)
 
-  val defaultCloudFormationSettings = validationSettings ++ operationSettings
-
+  implicit private def parametersToList(params: Parameters): util.Collection[Parameter] = {
+    val ps: Iterable[Parameter] = for {
+      (k, v) <- params
+      p = new Parameter()
+    } yield {
+      p.setParameterKey(k)
+      p.setParameterValue(v)
+      p
+    }
+    ps.toList
+  }
 
   def makeOperationConfig(config: Configuration) = Seq(
-
+    awsCredentials in config <<= awsCredentials,
     stackTemplate in config <<= stackTemplate,
     stackParams in config := Map(),
     stackName in config <<= stackName {
@@ -121,13 +141,16 @@ object CloudFormationPlugin extends sbt.Plugin {
     },
     stackRegion in config <<= stackRegion,
     stackCapabilities in config <<= stackCapabilities,
-    client in config <<= (stackRegion in config, awsCredentials) {
+    stackClient in config <<= (stackRegion in config, awsCredentials in config) {
       (region, credentials) =>
+        if (region == null)
+          throw new IllegalArgumentException("stackRegion must be set")
+
         val client = new AmazonCloudFormationClient(credentials)
         client.setRegion(Region.getRegion(Regions.fromName(region)))
         client
     },
-    describe in config <<= (client in config, stackName in config, streams) map {
+    stackDescribe in config <<= (stackClient in config, stackName in config, streams) map {
       (cl, stack, s) =>
 
         val request: DescribeStacksRequest = new DescribeStacksRequest()
@@ -135,7 +158,7 @@ object CloudFormationPlugin extends sbt.Plugin {
         val response = cl.describeStacks(request)
         response.getStacks.toList.foreach(stack => s.log.info(s"${stack.toString}"))
     },
-    describeStatus in config <<= (client in config, stackName in config, streams) map {
+    stackStatus in config <<= (stackClient in config, stackName in config, streams) map {
       (cl, stack, s) =>
 
         val request: DescribeStacksRequest = new DescribeStacksRequest()
@@ -143,31 +166,21 @@ object CloudFormationPlugin extends sbt.Plugin {
         val response = cl.describeStacks(request)
         response.getStacks.toList.foreach(stack => s.log.info(s"${stack.getStackStatus} - ${stack.getStackStatusReason}"))
     },
-    create in config <<= (client in config, stackName in config, stackTemplate in config, stackParams in config, stackCapabilities in config, streams) map {
+    stackCreate in config <<= (stackClient in config, stackName in config, stackTemplate in config, stackParams in config, stackCapabilities in config, streams) map {
       (cl, stack, template, params, capabilities, s) =>
 
         val request = new CreateStackRequest
         request.setStackName(stack)
         request.setTemplateBody(template)
         request.setCapabilities(capabilities)
-
-        val reqParams = for {
-          (k, v) <- params
-          p = new Parameter()
-        } yield {
-          p.setParameterKey(k)
-          p.setParameterValue(v)
-          p
-        }
-
-        request.setParameters(reqParams.toList)
+        request.setParameters(params)
 
         val result = cl.createStack(request)
 
         s.log.info(s"created stack ${request.getStackName} / ${result.getStackId}")
         result.getStackId
     },
-    delete in config <<= (client in config, stackName in config, streams) map {
+    stackDelete in config <<= (stackClient in config, stackName in config, streams) map {
       (cl, stack, s) =>
 
         val request = new DeleteStackRequest
@@ -177,6 +190,20 @@ object CloudFormationPlugin extends sbt.Plugin {
 
         s.log.info(s"deleting stack ${request.getStackName} ")
 
+    },
+    stackUpdate in config <<= (stackClient in config, stackName in config, stackTemplate in config, stackParams in config, stackCapabilities in config, streams) map {
+      (cl, stack, template, params, capabilities, s) =>
+
+        val request = new UpdateStackRequest
+        request.setStackName(stack)
+        request.setTemplateBody(template)
+        request.setCapabilities(capabilities)
+        request.setParameters(params)
+
+        val result = cl.updateStack(request)
+
+        s.log.info(s"updated stack ${request.getStackName} / ${result.getStackId}")
+        result.getStackId
     }
   )
 

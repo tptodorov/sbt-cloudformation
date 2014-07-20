@@ -1,8 +1,7 @@
-import sbtcloudformation.CloudFormationPlugin
+import com.github.tptodorov.sbt.cloudformation.CloudFormation
+import com.github.tptodorov.sbt.cloudformation.Import.Keys._
+import com.github.tptodorov.sbt.cloudformation.Import.Configurations._
 
-import CloudFormationPlugin.Keys._
-import CloudFormationPlugin.Configurations._
-
-CloudFormationPlugin.defaultCloudFormationSettings
+CloudFormation.defaultSettings
 
 stackParams in Staging := Map("NumberWithRange" -> "10", "StringWithLength" -> "longstring")
