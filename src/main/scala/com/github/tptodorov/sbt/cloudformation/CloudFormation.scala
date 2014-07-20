@@ -25,6 +25,7 @@ object Import {
   object Keys {
 
     type Parameters = Map[String, String]
+    type Tags = Map[String, String]
 
     // for all configurations
     val awsCredentials = settingKey[AWSCredentials]("AWS credentials")
@@ -34,6 +35,7 @@ object Import {
     // in each configuration
     val stackTemplate = settingKey[String]("default template to use for this configuration")
     val stackParams = settingKey[Parameters]("Parameters applied to the template for this configuration")
+    val stackTags = settingKey[Tags]("Tags of this stack")
     val stackCapabilities = settingKey[Seq[String]]("The list of capabilities that you want to allow in the stack . E.g.[CAPABILITY_IAM]")
     val stackRegion = settingKey[String]("The region where the stacks are deployed. E.g. eu-west-1 ")
     val stackName = settingKey[String]("stack name")
@@ -122,10 +124,22 @@ object CloudFormation extends sbt.Plugin {
   implicit private def parametersToList(params: Parameters): util.Collection[Parameter] = {
     val ps: Iterable[Parameter] = for {
       (k, v) <- params
-      p = new Parameter()
     } yield {
+      val p = new Parameter()
       p.setParameterKey(k)
       p.setParameterValue(v)
+      p
+    }
+    ps.toList
+  }
+
+  implicit private def tagsToList(tags: Tags): util.Collection[Tag] = {
+    val ps: Iterable[Tag] = for {
+      (k, v) <- tags
+    } yield {
+      val p = new Tag()
+      p.setKey(k)
+      p.setValue(v)
       p
     }
     ps.toList
@@ -135,6 +149,7 @@ object CloudFormation extends sbt.Plugin {
     awsCredentials in config <<= awsCredentials,
     stackTemplate in config <<= stackTemplate,
     stackParams in config := Map(),
+    stackTags in config := Map(),
     stackName in config <<= stackName {
       normName =>
         s"${config.name}-$normName"
@@ -166,14 +181,15 @@ object CloudFormation extends sbt.Plugin {
         val response = cl.describeStacks(request)
         response.getStacks.toList.foreach(stack => s.log.info(s"${stack.getStackStatus} - ${stack.getStackStatusReason}"))
     },
-    stackCreate in config <<= (stackClient in config, stackName in config, stackTemplate in config, stackParams in config, stackCapabilities in config, streams) map {
-      (cl, stack, template, params, capabilities, s) =>
+    stackCreate in config <<= (stackClient in config, stackName in config, stackTemplate in config, stackParams in config, stackTags in config, stackCapabilities in config, streams) map {
+      (cl, stack, template, params, tags, capabilities, s) =>
 
         val request = new CreateStackRequest
         request.setStackName(stack)
         request.setTemplateBody(template)
         request.setCapabilities(capabilities)
         request.setParameters(params)
+        request.setTags(tags)
 
         val result = cl.createStack(request)
 
