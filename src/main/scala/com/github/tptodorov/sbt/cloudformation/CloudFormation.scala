@@ -44,7 +44,7 @@ object Import {
     // stack operations
     val stackValidate = taskKey[Seq[File]]("validate templates")
     val stackDescribe = taskKey[Unit]("describe stack completely")
-    val stackStatus = taskKey[Unit]("describe stack status")
+    val stackStatus = taskKey[String]("describe stack status")
     val stackCreate = taskKey[String]("create a stack and returns its stackId")
     val stackDelete = taskKey[Unit]("delete a stack")
     val stackUpdate = taskKey[String]("update a stack")
@@ -179,7 +179,7 @@ object CloudFormation extends sbt.Plugin {
         val request: DescribeStacksRequest = new DescribeStacksRequest()
         request.setStackName(stack)
         val response = cl.describeStacks(request)
-        response.getStacks.toList.foreach(stack => s.log.info(s"${stack.getStackStatus} - ${stack.getStackStatusReason}"))
+        response.getStacks.toList.headOption.map(stack => stack.getStackStatus).orNull
     },
     stackCreate in config <<= (stackClient in config, stackName in config, stackTemplate in config, stackParams in config, stackTags in config, stackCapabilities in config, streams) map {
       (cl, stack, template, params, tags, capabilities, s) =>
