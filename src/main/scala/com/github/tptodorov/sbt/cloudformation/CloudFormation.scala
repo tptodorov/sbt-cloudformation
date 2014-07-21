@@ -163,7 +163,7 @@ object CloudFormation extends sbt.Plugin {
     stackTags in config := Map(),
     stackName in config <<= stackName {
       normName =>
-        s"${config.name}-$normName"
+        s"$normName-${config.name}"
     },
     stackRegion in config <<= stackRegion,
     stackCapabilities in config <<= stackCapabilities,
