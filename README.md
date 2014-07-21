@@ -13,7 +13,9 @@ If you have already setup [AWS CLI](http://aws.amazon.com/cli/), you don't have 
 Note that AWS_DEFAULT_REGION environment variable must also be set. For setting up AWS CLI, see [the setup instructions](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html).
 
 In your plugins.sbt add:
-
+    
+    resolvers += "SBT release"  at "http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"
+    
     addSbtPlugin("com.github.tptodorov" % "sbt-cloudformation" % "0.0.3")
 
 
