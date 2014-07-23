@@ -10,7 +10,7 @@ The plugin by default uses the [default credential provider supplied by AWS SDK]
 
 If you have already setup [AWS CLI](http://aws.amazon.com/cli/), you don't have to do any additional configurations.
 
-Note that AWS_DEFAULT_REGION environment variable must also be set. For setting up AWS CLI, see [the setup instructions](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html).
+Note that `AWS_DEFAULT_REGION` environment variable must also be set. For setting up AWS CLI, see [the setup instructions](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html).
 
 In your plugins.sbt add:
     
@@ -32,7 +32,7 @@ In your build.sbt add:
     stackTags in Staging := Map("env" -> "staging", "app" -> "sample")
 
 
-By default, there are two configurations: staging and production. For each configuration, there following settings are defined:
+By default, there are two configurations: staging and production. For each configuration, the following settings are defined and used for task execution:
 
  * `stackTemplate` - source of a CloudFormation template. By default, the first `.template` found in `src/main/aws` folder.
  * `stackParams` - map of template parameters  
@@ -45,13 +45,13 @@ For full list of settings, see [Keys](https://github.com/tptodorov/sbt-cloudform
 Tasks
 =====
 
- * `stackValidate` - validates CloudFormation *.template files. Supports `~ stackValidate` command as well.
- * `stackCreate`
- * `stackUpdate`
- * `stackDelete`
- * `stackDescribe`
- * `stackStatus`  - returns the current stack status
- * `stackWait` - blocks while the stack is in any of the `PROGRESS` states (see Usage below)
+ * `stackValidate` validates CloudFormation *.template files. Supports `~ stackValidate` command as well.
+ * `stackCreate` creates a stack. **Does not block until create is complete**
+ * `stackUpdate` updates a stack.
+ * `stackDelete` deletes a stack.
+ * `stackDescribe` describes a stack.
+ * `stackStatus`  returns the current stack status
+ * `stackWait` blocks while the stack is in any of the `PROGRESS` states (see Usage below)
 
 All tasks, except stackWait, return immediately.
 
