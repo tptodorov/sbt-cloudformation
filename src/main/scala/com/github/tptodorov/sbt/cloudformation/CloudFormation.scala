@@ -33,8 +33,8 @@ object Import {
     val templates = settingKey[Seq[File]]("template sources")
 
     // in each configuration
-    val stackTemplate = settingKey[String]("default template to use for this configuration")
-    val stackParams = settingKey[Parameters]("Parameters applied to the template for this configuration")
+    val stackTemplate = taskKey[String]("default template to use for this configuration")
+    val stackParams = taskKey[Parameters]("Parameters applied to the template for this configuration")
     val stackTags = settingKey[Tags]("Tags of this stack")
     val stackCapabilities = settingKey[Seq[String]]("The list of capabilities that you want to allow in the stack . E.g.[CAPABILITY_IAM]")
     val stackRegion = settingKey[String]("The region where the stacks are deployed. E.g. eu-west-1 ")
@@ -46,7 +46,7 @@ object Import {
     val stackStatus = taskKey[Option[String]]("describe stack status")
     val stackWait = taskKey[Option[String]]("evaluates the stack until it becomes COMPLETED or FAILED, returns last status")
 
-    val stackDescribe = taskKey[Unit]("describe stack completely")
+    val stackDescribe = taskKey[Option[Stack]]("describe stack completely")
     val stackCreate = taskKey[String]("create a stack and returns its stackId")
     val stackDelete = taskKey[Unit]("delete a stack")
     val stackUpdate = taskKey[String]("update a stack")
@@ -113,11 +113,9 @@ object CloudFormation extends sbt.Plugin {
 
   lazy val defaultSettings = validationSettings ++ Seq(
     stackRegion := System.getenv("AWS_DEFAULT_REGION"),
-    stackTemplate <<= templates {
+    stackTemplate <<= templates map {
       files =>
-        if (files.isEmpty)
-          throw new FileNotFoundException("*.template not found in this project")
-        IO.read(files.head)
+        IO.read(files.headOption.getOrElse(throw new FileNotFoundException("*.template not found in this project")))
     },
     stackName <<= normalizedName,
     stackCapabilities := Seq()
@@ -182,7 +180,9 @@ object CloudFormation extends sbt.Plugin {
         val request: DescribeStacksRequest = new DescribeStacksRequest()
         request.setStackName(stack)
         val response = cl.describeStacks(request)
-        response.getStacks.toList.foreach(stack => s.log.info(s"${stack.toString}"))
+        val stacks: List[Stack] = response.getStacks.toList
+        stacks.foreach(stack => s.log.debug(s"${stack.toString}"))
+        stacks.headOption
     },
     stackStatus in config <<= (stackClient in config, stackName in config, streams) map {
       (cl, stack, s) =>
