@@ -58,9 +58,17 @@ All tasks, except stackWait, return immediately.
 Usage Scenarios
 =====
 
- * Template Validation - all `*.template` files in `src/main/aws` are validated during compilation. Continuous validation can be done by: 
+ * Template Validation - all `*.template` files in `src/main/aws` are validated during compilation. Continuous validation while you are developing your templates can be done by: 
    
     `sbt ~stackValidate`
+
+    You can also specify where your templates are:
+    
+    `templatesSourceFolder <<= baseDirectory { _ / "src/main/resources" }`
+    
+    Most of the time, it is useful to add the template validation as part of the compilation process:
+    
+    `compile in Compile <<= (compile in Compile) dependsOn stackValidate`
 
  * Create/Update/Delete a stack and wait for it to complete. 
  
