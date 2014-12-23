@@ -6,9 +6,11 @@ name := "sbt-cloudformation"
 
 organization := "com.github.tptodorov"
 
-version := "0.2.0"
+version := "0.3.0"
 
-libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.7.5"
+scalaVersion := "2.10.4"
+
+libraryDependencies += "com.amazonaws" % "aws-java-sdk-cloudformation" % "1.9.10"
 
 publishTo <<= (version) { version: String =>
    val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
