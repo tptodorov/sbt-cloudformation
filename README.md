@@ -74,9 +74,9 @@ Usage Scenarios
  
     `sbt " ; staging:stackCreate ; export staging:stackWait "`
     
-    `sbt " ; staging:updateCreate ; export staging:stackWait "`
+    `sbt " ; staging:stackUpdate ; export staging:stackWait "`
     
-    `sbt " ; staging:deleteCreate ; export staging:stackWait "`
+    `sbt " ; staging:stackDelete ; export staging:stackWait "`
     
 Sample Project
 ======
