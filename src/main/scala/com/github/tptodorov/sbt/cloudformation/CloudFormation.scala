@@ -28,7 +28,7 @@ object Import {
     type Tags = Map[String, String]
 
     // for all configurations
-    val awsCredentials = settingKey[AWSCredentials]("AWS credentials")
+    val awsCredentials = taskKey[AWSCredentials]("AWS credentials")
     val templatesSourceFolder = settingKey[File]("folder where CloudFormation templates are")
     val templates = settingKey[Seq[File]]("template sources")
 
@@ -51,7 +51,7 @@ object Import {
     val stackDelete = taskKey[Unit]("delete a stack")
     val stackUpdate = taskKey[String]("update a stack")
 
-    val stackClient = settingKey[AmazonCloudFormationClient]("AWS CloudFormation Client")
+    val stackClient = taskKey[AmazonCloudFormationClient]("AWS CloudFormation Client")
   }
 
 }
@@ -165,14 +165,15 @@ object CloudFormation extends sbt.Plugin {
     },
     stackRegion in config <<= stackRegion,
     stackCapabilities in config <<= stackCapabilities,
-    stackClient in config <<= (stackRegion in config, awsCredentials in config) {
-      (region, credentials) =>
-        if (region == null)
-          throw new IllegalArgumentException("stackRegion must be set")
+    stackClient in config := {
+      val region = (stackRegion in config).value
+      if (region == null)
+        throw new IllegalArgumentException("stackRegion must be set")
 
-        val client = new AmazonCloudFormationClient(credentials)
-        client.setRegion(Region.getRegion(Regions.fromName(region)))
-        client
+      val credentials = (awsCredentials in config).value
+      val client = new AmazonCloudFormationClient(credentials)
+      client.setRegion(Region.getRegion(Regions.fromName(region)))
+      client
     },
     stackDescribe in config <<= (stackClient in config, stackName in config, streams) map {
       (cl, stack, s) =>
