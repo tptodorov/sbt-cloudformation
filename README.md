@@ -16,7 +16,7 @@ In your plugins.sbt add:
     
     resolvers += "SBT release"  at "http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"
     
-    addSbtPlugin("com.github.tptodorov" % "sbt-cloudformation" % "0.3.0")
+    addSbtPlugin("com.github.tptodorov" % "sbt-cloudformation" % "0.4.0")
 
 
 In your build.sbt add:
