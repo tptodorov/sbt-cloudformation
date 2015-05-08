@@ -1,0 +1,9 @@
+language: scala
+
+# needed to use caching, since project
+# is public
+sudo: false
+
+cache:
+  directories:
+  - "$HOME/.ivy2"
