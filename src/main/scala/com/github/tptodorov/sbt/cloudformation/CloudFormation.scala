@@ -77,7 +77,7 @@ object CloudFormation extends sbt.Plugin {
       awsCredentialsProvider.getCredentials
     },
 
-    watchSources <++= templates map identity,
+    watchSources ++= templates.value,
     stackValidate := {
       def validateTemplate(client: AmazonCloudFormationClient, log: Logger)(template: sbt.File): (File, Try[List[String]]) = {
         (template, Try {
