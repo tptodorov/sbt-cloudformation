@@ -1,6 +1,8 @@
 Sbt-CloudFormation
 ==================
 
+[![Build Status](https://travis-ci.org/gilt/sbt-cloudformation.svg)](https://travis-ci.org/gilt/sbt-cloudformation)
+
 SBT plugin for validation of CloudFormation templates and operating AWS CloudFormations.
 
 Setup
