@@ -18,16 +18,10 @@ In your plugins.sbt add:
     
     resolvers += "SBT release"  at "http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"
     
-    addSbtPlugin("com.github.tptodorov" % "sbt-cloudformation" % "0.4.0")
-
+    addSbtPlugin("com.github.tptodorov" % "sbt-cloudformation" % "0.5.0")
 
 In your build.sbt add:
 
-    import com.github.tptodorov.sbt.cloudformation.CloudFormation
-    import com.github.tptodorov.sbt.cloudformation.Import.Keys._
-    import com.github.tptodorov.sbt.cloudformation.Import.Configurations._
-
-    CloudFormation.defaultSettings
     // or any parameters required by your template
     stackParams in Staging := Map("NumberWithRange" -> "2", "StringWithLength" -> "longstring")
     // tag your stack

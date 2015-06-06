@@ -56,6 +56,8 @@ object CloudFormation extends AutoPlugin {
 
   private lazy val awsCredentialsProvider = new DefaultAWSCredentialsProviderChain()
 
+  override def trigger = allRequirements
+
   override lazy val projectSettings = {
     defaultSettings
   }
