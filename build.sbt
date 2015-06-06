@@ -25,18 +25,6 @@ licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
 scalacOptions += "-deprecation"
 
-crossBuildingSettings
-
-CrossBuilding.crossSbtVersions := Seq("0.13")
-
-CrossBuilding.scriptedSettings
-
-scriptedLaunchOpts <<= (scriptedLaunchOpts, version) { case (s,v) => s ++
-  Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + v)
-}
-
-scriptedBufferLog := false
-
 bintraySettings
 
 packageLabels in bintray := Seq("aws", "cloudformation")
