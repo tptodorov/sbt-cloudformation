@@ -15,15 +15,13 @@ import scala.collection.convert.WrapAsScala._
 import scala.collection.immutable.Iterable
 import scala.util.{Failure, Try}
 
-object Import {
+object CloudFormation extends AutoPlugin {
 
-  object Configurations {
+  object autoImport {
     lazy val Production = config("production")
     lazy val Staging = config("staging")
-  }
 
-  object Keys {
-
+    //Keys
     type Parameters = Map[String, String]
     type Tags = Map[String, String]
 
@@ -54,15 +52,13 @@ object Import {
     val stackClient = taskKey[AmazonCloudFormationClient]("AWS CloudFormation Client")
   }
 
-}
-
-object CloudFormation extends sbt.Plugin {
-
-
-  import com.github.tptodorov.sbt.cloudformation.Import.Configurations._
-  import com.github.tptodorov.sbt.cloudformation.Import.Keys._
+  import autoImport._
 
   private lazy val awsCredentialsProvider = new DefaultAWSCredentialsProviderChain()
+
+  override lazy val projectSettings = {
+    defaultSettings
+  }
 
   lazy val validationSettings = Seq(
 
