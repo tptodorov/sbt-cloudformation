@@ -1,1 +1,1 @@
-addSbtPlugin("com.github.tptodorov" % "sbt-cloudformation" % "0.0.3")
+addSbtPlugin("com.github.tptodorov" % "sbt-cloudformation" % "0.5.0")
