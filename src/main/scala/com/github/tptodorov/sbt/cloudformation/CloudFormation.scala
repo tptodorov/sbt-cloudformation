@@ -31,7 +31,8 @@ object CloudFormation extends AutoPlugin {
     val templates = settingKey[Seq[File]]("template sources")
 
     // in each configuration
-    val stackTemplate = taskKey[String]("default template to use for this configuration")
+    val stackTemplateFile = taskKey[File]("default template to use for this configuration")
+    val stackTemplate = taskKey[String]("content of default template to use for this configuration")
     val stackParams = taskKey[Parameters]("Parameters applied to the template for this configuration")
     val stackTags = settingKey[Tags]("Tags of this stack")
     val stackCapabilities = settingKey[Seq[String]]("The list of capabilities that you want to allow in the stack . E.g.[CAPABILITY_IAM]")
@@ -108,9 +109,8 @@ object CloudFormation extends AutoPlugin {
 
   lazy val defaultSettings = validationSettings ++ Seq(
     stackRegion := System.getenv("AWS_DEFAULT_REGION"),
-    stackTemplate := {
-      IO.read(templates.value.headOption.getOrElse(throw new FileNotFoundException("*.template not found in this project")))
-    },
+    stackTemplateFile := templates.value.headOption.getOrElse(throw new FileNotFoundException("*.template not found in this project")),
+    stackTemplate := IO.read(stackTemplateFile.value),
     stackName := normalizedName.value,
     stackCapabilities := Seq()
   ) ++ makeOperationConfig(Staging) ++ makeOperationConfig(Production)
