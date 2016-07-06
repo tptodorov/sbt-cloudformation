@@ -1,8 +1,4 @@
-import com.github.tptodorov.sbt.cloudformation.CloudFormation
-import com.github.tptodorov.sbt.cloudformation.Import.Keys._
-import com.github.tptodorov.sbt.cloudformation.Import.Configurations._
-
-CloudFormation.defaultSettings
+stackRegion := "eu-west-1"
 
 stackParams in Staging := Map("NumberWithRange" -> "2", "StringWithLength" -> "longstring")
 

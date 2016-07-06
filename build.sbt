@@ -6,7 +6,7 @@ name := "sbt-cloudformation"
 
 organization := "com.github.tptodorov"
 
-version := "0.5.0"
+version := "0.6.0"
 
 scalaVersion := "2.10.5"
 
@@ -24,18 +24,6 @@ publishTo <<= (version) { version: String =>
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
 scalacOptions += "-deprecation"
-
-crossBuildingSettings
-
-CrossBuilding.crossSbtVersions := Seq("0.13")
-
-CrossBuilding.scriptedSettings
-
-scriptedLaunchOpts <<= (scriptedLaunchOpts, version) { case (s,v) => s ++
-  Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + v)
-}
-
-scriptedBufferLog := false
 
 bintraySettings
 
