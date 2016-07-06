@@ -10,7 +10,7 @@ version := "0.6.0"
 
 scalaVersion := "2.10.5"
 
-libraryDependencies += "com.amazonaws" % "aws-java-sdk-cloudformation" % "1.10.16"
+libraryDependencies += "com.amazonaws" % "aws-java-sdk-cloudformation" % "1.11.14"
 
 publishTo <<= (version) { version: String =>
    val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
