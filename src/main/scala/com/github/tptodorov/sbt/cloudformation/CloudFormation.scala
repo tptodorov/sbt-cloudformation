@@ -2,7 +2,6 @@ package com.github.tptodorov.sbt.cloudformation
 
 import java.io.FileNotFoundException
 import java.util
-
 import com.amazonaws.auth.{AWSCredentials, DefaultAWSCredentialsProviderChain}
 import com.amazonaws.regions._
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClient
@@ -14,6 +13,7 @@ import scala.collection.convert.WrapAsJava._
 import scala.collection.convert.WrapAsScala._
 import scala.collection.immutable.Iterable
 import scala.util.{Failure, Try}
+import scala.language.implicitConversions
 
 object CloudFormation extends AutoPlugin {
 

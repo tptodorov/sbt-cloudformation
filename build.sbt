@@ -23,7 +23,7 @@ publishTo <<= (version) { version: String =>
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
-scalacOptions += "-deprecation"
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8")
 
 bintraySettings
 
