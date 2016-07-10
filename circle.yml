@@ -1,0 +1,18 @@
+machine:
+  timezone: UTC
+  java:
+    version: oraclejdk8
+  environment:
+    SBT_OPTS: "-Xmx1G -XX:MaxMetaspaceSize=512M -XX:+UseCompressedOops"
+
+dependencies:
+  cache_directories:
+    - "~/.sbt"
+    - "target/resolution-cache"
+    - "target/streams"
+    - "project/target/resolution-cache"
+    - "project/target/streams"
+
+test:
+  override:
+    - sbt test scripted
