@@ -6,11 +6,11 @@ name := "sbt-cloudformation"
 
 organization := "com.github.tptodorov"
 
-version := "0.7.0"
+version := "0.7.0-SNAPSHOT"
 
 scalaVersion := "2.10.5"
 
-libraryDependencies += "com.amazonaws" % "aws-java-sdk-cloudformation" % "1.10.16"
+libraryDependencies += "com.amazonaws" % "aws-java-sdk-cloudformation" % "1.11.14"
 
 publishTo <<= (version) { version: String =>
    val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
@@ -23,7 +23,7 @@ publishTo <<= (version) { version: String =>
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
-scalacOptions += "-deprecation"
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8")
 
 bintraySettings
 
@@ -34,3 +34,12 @@ publishMavenStyle := false
 repository in bintray := "sbt-plugins"
 
 bintrayOrganization in bintray := None
+
+ScriptedPlugin.scriptedSettings
+
+scriptedSettings
+
+scriptedBufferLog := false
+
+scriptedLaunchOpts ++= Seq("-Xmx1G", "-Dplugin.version=" + version.value)
+
