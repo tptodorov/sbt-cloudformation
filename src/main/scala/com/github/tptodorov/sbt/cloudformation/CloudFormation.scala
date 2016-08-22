@@ -165,7 +165,8 @@ object CloudFormation extends AutoPlugin {
 
       val credentials = (awsCredentials in config).value
       val client = new AmazonCloudFormationClient(credentials)
-      client.setRegion(Region.getRegion(Regions.fromName(region)))
+      
+      client.setRegion(Region.getRegion(Regions.valueOf(region)))
       client
     },
     stackDescribe in config := {
