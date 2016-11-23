@@ -11,7 +11,7 @@ scalaVersion := "2.10.5"
 libraryDependencies += "com.amazonaws" % "aws-java-sdk-cloudformation" % "1.11.14"
 
 publishTo <<= (version) { version: String =>
-   val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
+   val scalasbt = "https://dl.bintray.com/sbt/"
    val (name, url) = if (version.contains("-SNAPSHOT"))
                        ("sbt-plugin-snapshots-publish", scalasbt+"sbt-plugin-snapshots")
                      else

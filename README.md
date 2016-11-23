@@ -16,9 +16,9 @@ Note that `AWS_DEFAULT_REGION` environment variable must also be set. For settin
 
 In your plugins.sbt add:
     
-    resolvers += "SBT release"  at "http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"
+    resolvers += "SBT release"  at "https://dl.bintray.com/sbt/sbt-plugin-releases/"
     
-    addSbtPlugin("com.github.tptodorov" % "sbt-cloudformation" % "0.7.0")
+    addSbtPlugin("com.github.tptodorov" % "sbt-cloudformation" % "0.7.1")
 
 In your build.sbt add:
 
