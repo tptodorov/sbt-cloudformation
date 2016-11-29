@@ -1,7 +1,7 @@
 Sbt-CloudFormation
 ==================
 
-[ ![Codeship Status for tptodorov/sbt-cloudformation](https://codeship.com/projects/372faba0-ebf9-0132-15a4-1a6982ed746d/status?branch=master)](https://codeship.com/projects/83578)
+[![CircleCI](https://circleci.com/gh/tptodorov/sbt-cloudformation.svg?style=svg)](https://circleci.com/gh/tptodorov/sbt-cloudformation)
 
 SBT plugin for validation of CloudFormation templates and operating AWS CloudFormations.
 
