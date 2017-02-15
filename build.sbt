@@ -8,7 +8,7 @@ organization := "com.github.tptodorov"
 
 scalaVersion := "2.10.5"
 
-libraryDependencies += "com.amazonaws" % "aws-java-sdk-cloudformation" % "1.11.14"
+libraryDependencies += "com.amazonaws" % "aws-java-sdk-cloudformation" % "1.11.76"
 
 publishTo <<= (version) { version: String =>
    val scalasbt = "https://dl.bintray.com/sbt/"

@@ -119,11 +119,11 @@ object CloudFormation extends AutoPlugin {
     val ps: Iterable[Parameter] = for {
       (k, v) <- params
     } yield {
-      val p = new Parameter()
-      p.setParameterKey(k)
-      p.setParameterValue(v)
-      p
-    }
+        val p = new Parameter()
+        p.setParameterKey(k)
+        p.setParameterValue(v)
+        p
+      }
     ps.toList
   }
 
@@ -131,11 +131,11 @@ object CloudFormation extends AutoPlugin {
     val ps: Iterable[Tag] = for {
       (k, v) <- tags
     } yield {
-      val p = new Tag()
-      p.setKey(k)
-      p.setValue(v)
-      p
-    }
+        val p = new Tag()
+        p.setKey(k)
+        p.setValue(v)
+        p
+      }
     ps.toList
   }
 
@@ -169,14 +169,16 @@ object CloudFormation extends AutoPlugin {
       client
     },
     stackDescribe in config := {
-      val request: DescribeStacksRequest = new DescribeStacksRequest()
-      val stack = (stackName in config).value
-      request.setStackName(stack)
-      val cloudformationClient = (stackClient in config).value
-      val response = cloudformationClient.describeStacks(request)
-      val stacks: List[Stack] = response.getStacks.toList
-      stacks.foreach(stack => streams.value.log.debug(s"${stack.toString}"))
-      stacks.headOption
+      Try {
+        val request: DescribeStacksRequest = new DescribeStacksRequest()
+        val stack = (stackName in config).value
+        request.setStackName(stack)
+        val cloudformationClient = (stackClient in config).value
+        val response = cloudformationClient.describeStacks(request)
+        val stacks: List[Stack] = response.getStacks.toList
+        stacks.foreach(stack => streams.value.log.debug(s"${stack.toString}"))
+        stacks.headOption
+      }.toOption.flatten
     },
     stackStatus in config := {
       val stack = (stackName in config).value
@@ -219,8 +221,7 @@ object CloudFormation extends AutoPlugin {
       val cloudformationClient = (stackClient in config).value
 
       cloudformationClient.deleteStack(request)
-
-      streams.value.log.info(s"deleting stack ${request.getStackName} ")
+      streams.value.log.info(s"deleted stack ${request.getStackName} ")
     },
     stackUpdate in config := {
       val request = new UpdateStackRequest
@@ -228,13 +229,20 @@ object CloudFormation extends AutoPlugin {
       request.setTemplateBody((stackTemplate in config).value)
       request.setCapabilities((stackCapabilities in config).value)
       request.setParameters((stackParams in config).value)
+      val cf = (stackClient in config).value
 
-      val cloudformationClient = (stackClient in config).value
-
-      val result = cloudformationClient.updateStack(request)
-
-      streams.value.log.info(s"updated stack ${request.getStackName} / ${result.getStackId}")
-      result.getStackId
+      Try {
+        val result = cf.updateStack(request)
+        streams.value.log.info(s"updated stack ${request.getStackName} / ${result.getStackId}")
+        result.getStackId
+      }
+        .recover {
+          case e: com.amazonaws.services.cloudformation.model.AmazonCloudFormationException =>
+            streams.value.log.info(s"nothing to update ${request.getStackName}")
+            val d = (stackDescribe in config).value
+            d.get.getStackId
+        }
+        .get
     }
   )
 }
