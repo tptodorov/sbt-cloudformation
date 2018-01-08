@@ -6,13 +6,21 @@ name := "sbt-cloudformation"
 
 organization := "com.github.tptodorov"
 
-scalaVersion := "2.10.5"
+scalaVersion := "2.12.4"
+    
+sbtVersion in Global := "1.0.4"
+
+scalaCompilerBridgeSource := {
+   val sv = appConfiguration.value.provider.id.version
+   ("org.scala-sbt" % "compiler-interface" % sv % "component").sources
+}
 
 libraryDependencies += "com.amazonaws" % "aws-java-sdk-cloudformation" % "1.11.76"
 
-publishTo <<= (version) { version: String =>
+publishTo := { 
+   val v = version.value
    val scalasbt = "https://dl.bintray.com/sbt/"
-   val (name, url) = if (version.contains("-SNAPSHOT"))
+   val (name, url) = if (v.contains("-SNAPSHOT"))
                        ("sbt-plugin-snapshots-publish", scalasbt+"sbt-plugin-snapshots")
                      else
                        ("sbt-plugin-releases-publish", scalasbt+"sbt-plugin-releases")

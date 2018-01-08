@@ -8,12 +8,10 @@ import com.amazonaws.services.cloudformation.AmazonCloudFormationClient
 import com.amazonaws.services.cloudformation.model._
 import sbt.Keys._
 import sbt._
-
-import scala.collection.convert.WrapAsJava._
-import scala.collection.convert.WrapAsScala._
+import scala.collection.JavaConverters._
+import scala.language.implicitConversions
 import scala.collection.immutable.Iterable
 import scala.util.{Failure, Try}
-import scala.language.implicitConversions
 
 object CloudFormation extends AutoPlugin {
 
@@ -76,7 +74,6 @@ object CloudFormation extends AutoPlugin {
       awsCredentialsProvider.getCredentials
     },
 
-    watchSources ++= templates.value,
     stackValidate := {
       def validateTemplate(client: AmazonCloudFormationClient, log: Logger)(template: sbt.File): (File, Try[List[String]]) = {
         (template, Try {
@@ -85,7 +82,7 @@ object CloudFormation extends AutoPlugin {
           val result = client.validateTemplate(request)
           log.debug(s"result from validating $template : $result")
           log.info(s"validated $template")
-          result.getParameters.toList.map(_.getParameterKey)
+          result.getParameters.asScala.toList.map(_.getParameterKey)
         })
       }
 
@@ -124,7 +121,7 @@ object CloudFormation extends AutoPlugin {
         p.setParameterValue(v)
         p
       }
-    ps.toList
+    ps.toList.asJava
   }
 
   implicit private def tagsToList(tags: Tags): util.Collection[Tag] = {
@@ -136,7 +133,7 @@ object CloudFormation extends AutoPlugin {
         p.setValue(v)
         p
       }
-    ps.toList
+    ps.toList.asJava
   }
 
   private def fetchStatus(stack: String, cl: AmazonCloudFormationClient): Option[String] = {
@@ -144,7 +141,7 @@ object CloudFormation extends AutoPlugin {
       val request: DescribeStacksRequest = new DescribeStacksRequest()
       request.setStackName(stack)
       val response = cl.describeStacks(request)
-      response.getStacks.toList.headOption.map(stack => stack.getStackStatus)
+      response.getStacks.asScala.toList.headOption.map(stack => stack.getStackStatus)
     }.toOption.flatten
   }
 
@@ -156,8 +153,8 @@ object CloudFormation extends AutoPlugin {
     stackName in config := {
       s"${stackName.value}-${config.name}"
     },
-    stackRegion in config <<= stackRegion,
-    stackCapabilities in config <<= stackCapabilities,
+    stackRegion in config := stackRegion.value,
+    stackCapabilities in config := stackCapabilities.value,
     stackClient in config := {
       val region = (stackRegion in config).value
       if (region == null)
@@ -175,7 +172,7 @@ object CloudFormation extends AutoPlugin {
         request.setStackName(stack)
         val cloudformationClient = (stackClient in config).value
         val response = cloudformationClient.describeStacks(request)
-        val stacks: List[Stack] = response.getStacks.toList
+        val stacks: List[Stack] = response.getStacks.asScala.toList
         stacks.foreach(stack => streams.value.log.debug(s"${stack.toString}"))
         stacks.headOption
       }.toOption.flatten
@@ -204,7 +201,7 @@ object CloudFormation extends AutoPlugin {
       val request = new CreateStackRequest
       request.setStackName((stackName in config).value)
       request.setTemplateBody((stackTemplate in config).value)
-      request.setCapabilities((stackCapabilities in config).value)
+      request.setCapabilities((stackCapabilities in config).value.asJava)
       request.setParameters((stackParams in config).value)
       request.setTags((stackTags in config).value)
 
@@ -227,7 +224,7 @@ object CloudFormation extends AutoPlugin {
       val request = new UpdateStackRequest
       request.setStackName((stackName in config).value)
       request.setTemplateBody((stackTemplate in config).value)
-      request.setCapabilities((stackCapabilities in config).value)
+      request.setCapabilities((stackCapabilities in config).value.asJava)
       request.setParameters((stackParams in config).value)
       val cf = (stackClient in config).value
 
